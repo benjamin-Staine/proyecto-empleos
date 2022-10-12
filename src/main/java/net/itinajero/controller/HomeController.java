@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -43,6 +45,25 @@ public class HomeController {
 	
 	@Autowired
 	private IUsuariosService serviceUsuarios;
+	
+	@GetMapping("/")
+	public String mostrarHome(Model model) {
+		return "home";
+	}
+	
+	@GetMapping("/index")
+	public String mostrarIndex(Authentication auth) {
+		String username = auth.getName();
+		System.out.println("Nombre del usuario: " + username);
+		
+		for (GrantedAuthority rol: auth.getAuthorities()) {
+			System.out.println("ROL: " + rol.getAuthority());
+		}
+		
+		return "redirect:/";
+	}
+	
+
 	
 	@GetMapping("/create")
 	public String registrarse(Usuario usuario,Model model) {
@@ -97,10 +118,6 @@ public class HomeController {
 		return "listado";
 	}
 
-	@GetMapping("/")
-	public String mostrarHome(Model model) {
-		return "home";
-	}
 	
 	@GetMapping("/search")
 	public String buscar(@ModelAttribute("search") Vacante vacante, Model model) {
