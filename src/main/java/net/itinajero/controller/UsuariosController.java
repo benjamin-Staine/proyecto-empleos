@@ -14,31 +14,25 @@ import net.itinajero.model.Usuario;
 import net.itinajero.service.IUsuariosService;
 
 
-
 @Controller
 @RequestMapping("/usuarios")
 public class UsuariosController {
 
-	@Autowired
-   	private IUsuariosService serviceUsuarios;
-	
+    @Autowired
+	private IUsuariosService serviceUsuarios;
     
-    @GetMapping("/index")
+   @GetMapping("/index")
 	public String mostrarIndex(Model model) {
-    	// Ejercicio
     	List<Usuario> lista = serviceUsuarios.buscarTodos();
     	model.addAttribute("usuarios", lista);
-    	return "usuarios/listUsuarios";
+		return "usuarios/listUsuarios";
 	}
     
     @GetMapping("/delete/{id}")
 	public String eliminar(@PathVariable("id") int idUsuario, RedirectAttributes attributes) {		    	
-		
-    	// Ejercicio.
-    	serviceUsuarios.eliminar(idUsuario);
-		attributes.addFlashAttribute("msg", "El usuario fue eliminado");
-		
-
+		// Eliminamos el usuario
+    	serviceUsuarios.eliminar(idUsuario);			
+		attributes.addFlashAttribute("msg", "El usuario fue eliminado!.");
 		return "redirect:/usuarios/index";
 	}
 }

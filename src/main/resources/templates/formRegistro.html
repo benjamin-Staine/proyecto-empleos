@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html xmlns:th="http://www.thymeleaf.org">
   <head>
     <meta charset="utf-8">
@@ -7,7 +7,7 @@
     <meta name="author" content="">
     <link rel="icon" href="favicon.ico">
 
-    <title>EmpleosApp | Formulario de Registro</title>
+    <title>EmpleosApp | Formulario de registro</title>
     <!-- Bootstrap core CSS -->
     <link th:href="@{/bootstrap/css/bootstrap.min.css}" rel="stylesheet">
     <!-- Custom styles for this template -->
@@ -17,7 +17,7 @@
 
   <body>
 
-   <header th:insert="fragments/menu :: menu-principal"></header>
+    <header th:insert="fragments/menu :: menu-principal"></header>
 
     <main role="main">     
       <hr>
@@ -26,18 +26,11 @@
         <div class="card">
           <h4 class="card-header"><strong>Formulario de registro</strong></h4>              
           <div class="card-body">
-            <form th:action="@{/save}" method="post" th:object="${usuario}"> 
-            <div th:if="${#fields.hasErrors('*')}" class='alert alert-danger' role='alert'>
-				Por favor corrija los siguientes errores:
-					<ul>
-						<li th:each="err : ${#fields.errors('*')}" th:text="${err}" />
-					</ul>
-			</div>             
+            <form th:action="@{/signup}" th:object="${usuario}" method="post">              
               <div class="row">
                 <div class="col-md-3"> 
                   <div class="form-group">
                     <label for="nombre">Nombre</label>
-                     <input type="hidden" th:field="*{id}">
                     <input type="text" class="form-control" th:field="*{nombre}" id="nombre" name="nombre" placeholder="Escriba su nombre" required="required">
                   </div>
                 </div>

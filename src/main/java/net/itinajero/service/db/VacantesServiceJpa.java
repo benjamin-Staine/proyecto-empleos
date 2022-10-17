@@ -17,17 +17,20 @@ import net.itinajero.service.IVacantesService;
 @Service
 @Primary
 public class VacantesServiceJpa implements IVacantesService {
-	
-	@Autowired
-	private VacantesRepository vacantesRepo;
 
+	@Autowired
+	private VacantesRepository vacantesRepo; 
+	
+	
 	@Override
 	public List<Vacante> buscarTodas() {
+		
 		return vacantesRepo.findAll();
 	}
 
 	@Override
 	public Vacante buscarPorId(Integer idVacante) {
+		
 		Optional<Vacante> optional = vacantesRepo.findById(idVacante);
 		if(optional.isPresent()) {
 			return optional.get();
@@ -43,21 +46,26 @@ public class VacantesServiceJpa implements IVacantesService {
 
 	@Override
 	public List<Vacante> buscarDestacadas() {
+		// TODO Auto-generated method stub
 		return vacantesRepo.findByDestacadoAndEstatusOrderByIdDesc(1, "Aprobada");
 	}
 
 	@Override
 	public void eliminar(Integer idVacante) {
+		// TODO Auto-generated method stub
 		vacantesRepo.deleteById(idVacante);
+		
 	}
 
 	@Override
 	public List<Vacante> buscarByExample(Example<Vacante> example) {
+		
 		return vacantesRepo.findAll(example);
 	}
 
 	@Override
 	public Page<Vacante> buscarTodas(Pageable page) {
+		
 		return vacantesRepo.findAll(page);
 	}
 

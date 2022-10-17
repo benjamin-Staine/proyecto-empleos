@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,29 +13,25 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import net.itinajero.model.Categoria;
 import net.itinajero.model.Perfil;
 import net.itinajero.model.Usuario;
 import net.itinajero.model.Vacante;
 import net.itinajero.service.ICategoriasService;
 import net.itinajero.service.IUsuariosService;
 import net.itinajero.service.IVacantesService;
-import net.itinajero.util.Utileria;
 
 @Controller
 public class HomeController {
@@ -42,33 +39,40 @@ public class HomeController {
 	@Autowired
 	private ICategoriasService serviceCategorias;
 	
+	
 	@Autowired
 	private IVacantesService serviceVacantes;
 	
-	@Autowired
-	private IUsuariosService serviceUsuarios;
 	
-	@GetMapping("/")
-	public String mostrarHome(Model model) {
+	@Autowired
+   	private IUsuariosService serviceUsuarios;
+	
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
+	
+	@GetMapping ("/")
+	public String mostrarHome(Model model ) {	
 		return "home";
 	}
 	
 	@GetMapping("/index")
 	public String mostrarIndex(Authentication auth, HttpSession session) {
 		String username = auth.getName();
-		System.out.println("Nombre del usuario: " + username);
+		System.out.println("Nombre del Usuario: " + username);
 		
 		for (GrantedAuthority rol: auth.getAuthorities()) {
 			System.out.println("ROL: " + rol.getAuthority());
 		}
 		
 		if (session.getAttribute("usuario") == null) {
-		Usuario usuario = serviceUsuarios.buscarPorUsername(username);
-		usuario.setPassword(null);
-		System.out.println("Usuario: " + usuario);
-		session.setAttribute("usuario", usuario);
+			Usuario usuario = serviceUsuarios.buscarPorUsername(username);
+			usuario.setPassword(null);
+			System.out.println("Usuario: " + usuario);
+			session.setAttribute("usuario", usuario);
 		}
-		return "redirect:/";
+		
+		 return "redirect:/";
 	}
 	
 	@GetMapping("/signup")
@@ -76,25 +80,30 @@ public class HomeController {
 		return "formRegistro";
 	}
 	
-	@GetMapping("/create")
-	public String registrarse(Usuario usuario,Model model) {
-		return "usuarios/formUsuarios";
-	}
-	
-	@PostMapping("/save")
+	@PostMapping("/signup")
 	public String guardarRegistro(Usuario usuario, RedirectAttributes attributes) {
-		 //Ejercicio.
-		 usuario.setEstatus(1);
-		 usuario.setFechaRegistro(new Date());
-		 
-		 Perfil perfil = new Perfil();
-		 perfil.setId(3);
-		 usuario.agregar(perfil);
-		 
+		
+		String pwdPlano = usuario.getPassword();
+		String pwdEncriptado = passwordEncoder.encode(pwdPlano);
+		usuario.setPassword(pwdEncriptado);		
+		usuario.setEstatus(1); // Activado por defecto
+		usuario.setFechaRegistro(new Date()); // Fecha de Registro, la fecha actual del servidor
+		
+		// Creamos el Perfil que le asignaremos al usuario nuevo
+		Perfil perfil = new Perfil();
+		perfil.setId(3); // Perfil USUARIO
+		usuario.agregar(perfil);
+		
+		/**
+		 * Guardamos el usuario en la base de datos. El Perfil se guarda automaticamente
+		 */
 		serviceUsuarios.guardar(usuario);
-		attributes.addFlashAttribute("msg", "Usuario registrado exitosamente");		
+				
+		attributes.addFlashAttribute("msg", "El registro fue guardado correctamente!");
+		
 		return "redirect:/usuarios/index";
 	}
+	
 	
 	@GetMapping("/tabla")
 	public String mostrarTabla(Model model) {
@@ -104,21 +113,24 @@ public class HomeController {
 		return "tabla";
 	}
 	
+	
 	@GetMapping("/detalle")
 	public String mostrarDetalle(Model model) {
+		
+		
 		Vacante vacante = new Vacante();
-		vacante.setNombre("Ingeniero de Comunicaciones");
-		vacante.setDescripcion("Se Solicita ingeniero para dar soporte a intranet");
+		vacante.setNombre("Ingeniero de comunicaciones");
+		vacante.setDescripcion("Se solicita ingeniero para dar soporte a intranet");
 		vacante.setFecha(new Date());
 		vacante.setSalario(9700.0);
 		model.addAttribute("vacante", vacante);
 		return "detalle";
+		
 	}
 	
-	
 	@GetMapping("/listado")
-	public String mostrarListado(Model model) {
-		List<String> lista= new LinkedList<String>();
+	public String mostrarListado(Model model ) {
+		List<String> lista = new LinkedList<String>();
 		lista.add("Ingeniero de Sistemas");
 		lista.add("Auxiliar de Contabilidad");
 		lista.add("Vendedor");
@@ -128,28 +140,62 @@ public class HomeController {
 		
 		return "listado";
 	}
+	
+	@GetMapping("/login" )
+	public String mostrarLogin() {
+	return "formLogin";
+	}
+	
+	@GetMapping("/logout")
+	public String logout(HttpServletRequest request){
+		SecurityContextLogoutHandler logoutHandler =
+		new SecurityContextLogoutHandler();
+		logoutHandler.logout(request, null, null);
+	return "redirect:/";
+	}
 
+	
+	@GetMapping("/bcrypt/{texto}")
+	@ResponseBody
+	public String encriptar(@PathVariable("texto") String texto) {
+		
+		return texto + " Encriptado en Bcrypt: " + passwordEncoder.encode(texto);
+	}
+	
 	
 	@GetMapping("/search")
 	public String buscar(@ModelAttribute("search") Vacante vacante, Model model) {
-		System.out.println("Buscando por: " + vacante);
+		System.out.println("Buscando por : " + vacante);
+		
 		
 		ExampleMatcher matcher = ExampleMatcher.
 				//where descripcion like '%?%'
 				matching().withMatcher("descripcion", ExampleMatcher.GenericPropertyMatchers.contains());
 		
+		
+		
 		Example<Vacante> example = Example.of(vacante, matcher);
 		List<Vacante> lista = serviceVacantes.buscarByExample(example);
 		model.addAttribute("vacantes", lista);
-		return "home"; 
+		return "home";
 	}
 	
 	
-	//InitBinder para Strings si los detecta vacios en el Data Binding los settea a NULL	
+	
+	
+	/**
+	 * Initer para Strings si los detecta vacion en el data binding los settea a null
+	 * @param binder
+	 */
 	@InitBinder
 	public void initBinder(WebDataBinder binder) {
 		binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
 	}
+	
+	
+	
+	
+	
 	
 	@ModelAttribute
 	public void setGenericos(Model model) {
@@ -158,6 +204,7 @@ public class HomeController {
 		model.addAttribute("vacantes", serviceVacantes.buscarDestacadas());
 		model.addAttribute("categorias", serviceCategorias.buscarTodas());
 		model.addAttribute("search", vacanteSearch);
+		
 	}
 	
 }

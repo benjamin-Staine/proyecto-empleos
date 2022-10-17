@@ -6,9 +6,11 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
 import net.itinajero.model.Categoria;
 
 @Service
+//@Primary
 public class CategoriasServiceImpl implements ICategoriasService{
 
 	private List<Categoria> lista = null;
